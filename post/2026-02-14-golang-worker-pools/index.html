@@ -1,0 +1,456 @@
+<!doctype html><head><link rel=stylesheet href=/css/main.min.8df455b0c2b0c348555d002ccc019c08efca05682c23b5eac87551dbe9647b7d.css></head><html lang=en><head><meta charset=utf-8><meta name=theme-color media="(prefers-color-scheme: light)" content="#f7f7f7"><meta name=theme-color media="(prefers-color-scheme: dark)" content="#1b1b1e"><meta name=mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="black-translucent"><meta name=viewport content="width=device-width,user-scalable=no,initial-scale=1,shrink-to-fit=no,viewport-fit=cover"><meta property="og:url" content="/post/2026-02-14-golang-worker-pools/"><meta property="og:site_name" content="J. Alonso Guerra"><meta property="og:title" content="Mastering Worker Pools in Go: A Practical Guide"><meta property="og:description" content="Learn how to build efficient worker pools in Go using goroutines and channels. From the basics to production-ready patterns with graceful shutdown, error handling, and dynamic scaling."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="post"><meta property="article:published_time" content="2026-02-14T10:00:00-05:00"><meta property="article:modified_time" content="2026-02-14T10:00:00-05:00"><meta property="article:tag" content="Golang"><meta property="article:tag" content="Worker-Pools"><meta property="article:tag" content="Concurrency"><meta property="article:tag" content="Channels"><meta property="article:tag" content="Goroutines"><meta name=twitter:card content="summary"><meta name=twitter:title content="Mastering Worker Pools in Go: A Practical Guide"><meta name=twitter:description content="Learn how to build efficient worker pools in Go using goroutines and channels. From the basics to production-ready patterns with graceful shutdown, error handling, and dynamic scaling."><meta itemprop=name content="Mastering Worker Pools in Go: A Practical Guide"><meta itemprop=description content="Learn how to build efficient worker pools in Go using goroutines and channels. From the basics to production-ready patterns with graceful shutdown, error handling, and dynamic scaling."><meta itemprop=datePublished content="2026-02-14T10:00:00-05:00"><meta itemprop=dateModified content="2026-02-14T10:00:00-05:00"><meta itemprop=wordCount content="1193"><meta itemprop=keywords content="Golang,Worker-Pools,Concurrency,Channels,Goroutines"><title>Mastering Worker Pools in Go: A Practical Guide |
+J. Alonso Guerra</title><link rel=apple-touch-icon sizes=180x180 href=/img/favicons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/img/favicons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/img/favicons/favicon-16x16.png><link rel="shortcut icon" href=/img/favicons/favicon.ico><meta name=apple-mobile-web-app-title content="J. Alonso Guerra"><meta name=application-name content="J. Alonso Guerra"><meta name=msapplication-TileColor content="#da532c"><meta name=msapplication-config content="/img/favicons/browserconfig.xml"><meta name=theme-color content="#ffffff"><link rel=preconnect href=https://fonts.googleapis.com><link rel=dns-prefetch href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link rel=dns-prefetch href=https://fonts.gstatic.com><link rel=preconnect href=https://cdn.jsdelivr.net><link rel=dns-prefetch href=https://cdn.jsdelivr.net><link rel=stylesheet href=/css/main.min.8df455b0c2b0c348555d002ccc019c08efca05682c23b5eac87551dbe9647b7d.css><link rel=stylesheet href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&amp;family=Source+Sans+Pro:wght@400;600;700;900&amp;display=swap"><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.1/css/all.min.css><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/tocbot@4.32.2/dist/tocbot.min.css><link rel=stylesheet href=/><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/glightbox@3.3.0/dist/css/glightbox.min.css><script src=/js/modules/theme.js></script><script src=https://cdn.jsdelivr.net/npm/glightbox@3.3.0/dist/js/glightbox.min.js></script><script src=https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js></script><script src=https://cdn.jsdelivr.net/npm/dayjs@1.11.13/dayjs.min.js></script><script src=https://cdn.jsdelivr.net/npm/dayjs@1.11.13/locale/en.js></script><script src=https://cdn.jsdelivr.net/npm/dayjs@1.11.13/plugin/relativeTime.js></script><script src=https://cdn.jsdelivr.net/npm/dayjs@1.11.13/plugin/localizedFormat.js></script><script src=https://cdn.jsdelivr.net/npm/tocbot@4.32.2/dist/tocbot.min.js></script><script defer src=/js/post.js></script></head><body><aside aria-label=Sidebar id=sidebar class="d-flex flex-column align-items-end"><header class=profile-wrapper><a href=/ id=avatar class=rounded-circle><img src=/img/commons/avatar.jpg width=112 height=112 alt=avatar onerror='this.style.display="none"'></a>
+<a class="site-title d-block" href=/>J. Alonso Guerra</a><p class="site-subtitle fst-italic mb-0">Golang Backend Engineer | Cloud Architect</p></header><nav class="flex-column flex-grow-1 w-100 ps-0"><ul class=nav><li class=nav-item><a href=/ class=nav-link><i class="fa-fw fas fa-house"></i>
+<span>HOME</span></a></li><li class=nav-item><a href=/categories/ class=nav-link><i class="fa-fw fas fa-stream"></i>
+<span>CATEGORIES</span></a></li><li class=nav-item><a href=/tags/ class=nav-link><i class="fa-fw fas fa-tags"></i>
+<span>TAGS</span></a></li><li class=nav-item><a href=/archives/ class=nav-link><i class="fa-fw fas fa-archive"></i>
+<span>ARCHIVES</span></a></li><li class=nav-item><a href=/about/ class=nav-link><i class="fa-fw fas fa-info-circle"></i>
+<span>ABOUT</span></a></li><li class="nav-item mt-4"><a class="nav-link no-hover"><i class="fa-fw fas fa-language"></i><div class=lang-dropdown><select class=lang-select onchange="location=this.value"><option value=/en/ selected>English</option><option value=/es/>Español</option></select></div></a></li></ul></nav><div class="sidebar-bottom d-flex flex-wrap align-items-center w-100"><button type=button class="btn btn-link nav-link" aria-label="Switch Mode" id=mode-toggle>
+<i class="fas fa-adjust"></i>
+</button>
+<span class=icon-border></span>
+<a href=https://github.com/j-alonso-guerra aria-label=github target=_blank rel="noopener noreferrer"><i class="fab fa-github"></i>
+</a><a href=mailto:juniorguerrac17@gmail.com aria-label=email target=_blank rel="noopener noreferrer"><i class="fas fa-envelope"></i>
+</a><a href=/index.xml aria-label=rss><i class="fas fa-rss"></i></a></div></aside><div id=main-wrapper class="d-flex justify-content-center"><div class="container d-flex flex-column px-xxl-5"><header id=topbar-wrapper class=flex-shrink-0 aria-label="Top Bar"><div id=topbar class="d-flex align-items-center justify-content-between px-lg-3 h-100"><nav id=breadcrumb aria-label=Breadcrumb><span><a href=/>Home</a>
+</span><span>Mastering Worker Pools in Go: A Practical Guide</span></nav><button type=button id=sidebar-trigger class="btn btn-link" aria-label=Sidebar>
+<i class="fas fa-bars fa-fw"></i></button><div id=topbar-title>Mastering Worker Pools in Go: A Practical Guide</div><button type=button id=search-trigger class="btn btn-link" aria-label=Search>
+<i class="fas fa-search fa-fw"></i>
+</button>
+<search id=search class="align-items-center ms-3 ms-lg-0"><i class="fas fa-search fa-fw"></i>
+<input class=form-control id=search-input type=search aria-label=search autocomplete=off placeholder=Search...>
+</search><button type=button class="btn btn-link text-decoration-none" id=search-cancel>Cancel</button></div></header><div class="row flex-grow-1"><main aria-label="Main Content" class="col-12 col-lg-11 col-xl-9 px-md-4"><article class=px-1 data-toc=true><header><h1 data-toc-skip>Mastering Worker Pools in Go: A Practical Guide</h1><p class="post-desc fw-light mb-4">Learn how to build efficient worker pools in Go using goroutines and channels. From the basics to production-ready patterns with graceful shutdown, error handling, and dynamic scaling.</p><div class="post-meta text-muted"><span>Posted
+<time data-ts=1771081200 data-df=ll data-bs-toggle=tooltip data-bs-placement=bottom>%b %e, %Y</time></span><div class="d-flex justify-content-between"><span>By
+<em><a href=https://github.com/j-alonso-guerra>J. Alonso Guerra</a></em></span><div><span class=readtime data-bs-toggle=tooltip data-bs-placement=bottom title="4643 words"><em>25 min</em> read</span></div></div></div></header><div id=toc-bar class="d-flex align-items-center justify-content-between invisible"><span class="label text-truncate">Mastering Worker Pools in Go: A Practical Guide</span>
+<button type=button class="toc-trigger btn me-1">
+<i class="fa-solid fa-list-ul fa-fw"></i></button></div><button id=toc-solo-trigger type=button class="toc-trigger btn btn-outline-secondary btn-sm">
+<span class="label ps-2 pe-1">Contents</span>
+<i class="fa-solid fa-angle-right fa-fw"></i>
+</button>
+<dialog id=toc-popup class=p-0><div class="header d-flex flex-row align-items-center justify-content-between"><div class="label text-truncate py-2 ms-4">Mastering Worker Pools in Go: A Practical Guide</div><button id=toc-popup-close type=button class="btn mx-1 my-1 opacity-75">
+<i class="fas fa-close"></i></button></div><div id=toc-popup-content class="px-4 py-3 pb-4"><nav id=TableOfContents><ul><li><a href=#why-worker-pools>Why Worker Pools?</a></li><li><a href=#the-basic-pattern>The Basic Pattern</a></li><li><a href=#adding-error-handling>Adding Error Handling</a></li><li><a href=#graceful-shutdown-with-context>Graceful Shutdown with Context</a></li><li><a href=#a-production-ready-pool>A Production-Ready Pool</a></li><li><a href=#when-to-use-worker-pools>When to Use Worker Pools</a></li><li><a href=#key-takeaways>Key Takeaways</a></li></ul></nav></div></dialog><div class=content><p>If you&rsquo;ve worked with Go for any amount of time, you&rsquo;ve probably reached a point where spinning up a goroutine per task starts to feel wrong. Maybe you&rsquo;re hitting API rate limits, exhausting database connections, or just watching your memory usage climb. That&rsquo;s where <strong>worker pools</strong> come in.</p><p>A worker pool is a concurrency pattern where a fixed number of goroutines (workers) process tasks from a shared queue. It gives you <strong>controlled parallelism</strong> — the ability to do many things at once without doing <em>everything</em> at once.</p><h2 id=why-worker-pools id=why-worker-pools><span class=me-2>Why Worker Pools?</span>
+<a href=#why-worker-pools class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2><p>Consider this naive approach:</p><div class=code-block><div class=code-header><span data-label-text=Go><i class="fas fa-code fa-fw small"></i></span> <button aria-label=copy data-title-succeed=Copied!><i class="far fa-clipboard"></i></button></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=k>for</span><span class=w> </span><span class=nx>_</span><span class=p>,</span><span class=w> </span><span class=nx>url</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>urls</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>go</span><span class=w> </span><span class=nf>fetch</span><span class=p>(</span><span class=nx>url</span><span class=p>)</span><span class=w> </span><span class=c1>// 10,000 URLs = 10,000 goroutines</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>This works until it doesn&rsquo;t. With 10,000 URLs you&rsquo;ll open 10,000 connections simultaneously, likely getting rate-limited, running out of file descriptors, or crashing the target server.</p><p>A worker pool solves this by limiting concurrency:</p><div class=code-block><div class=code-header><span data-label-text=Text><i class="fas fa-code fa-fw small"></i></span> <button aria-label=copy data-title-succeed=Copied!><i class="far fa-clipboard"></i></button></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-text data-lang=text><span class=line><span class=cl>           ┌──────────┐
+</span></span><span class=line><span class=cl>  Tasks ──&gt;│  Channel  │──&gt; Worker 1 ──&gt; Results
+</span></span><span class=line><span class=cl>           │  (Queue)  │──&gt; Worker 2 ──&gt; Results
+</span></span><span class=line><span class=cl>           │           │──&gt; Worker 3 ──&gt; Results
+</span></span><span class=line><span class=cl>           └──────────┘</span></span></code></pre></td></tr></table></div></div></div><p>Fixed workers, controlled throughput, predictable resource usage.</p><h2 id=the-basic-pattern id=the-basic-pattern><span class=me-2>The Basic Pattern</span>
+<a href=#the-basic-pattern class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2><p>Here&rsquo;s the simplest worker pool in Go:</p><div class=code-block><div class=code-header><span data-label-text=Go><i class="fas fa-code fa-fw small"></i></span> <button aria-label=copy data-title-succeed=Copied!><i class="far fa-clipboard"></i></button></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kn>import</span><span class=w> </span><span class=p>(</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;fmt&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;sync&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>worker</span><span class=p>(</span><span class=nx>id</span><span class=w> </span><span class=kt>int</span><span class=p>,</span><span class=w> </span><span class=nx>jobs</span><span class=w> </span><span class=o>&lt;-</span><span class=kd>chan</span><span class=w> </span><span class=kt>int</span><span class=p>,</span><span class=w> </span><span class=nx>results</span><span class=w> </span><span class=kd>chan</span><span class=o>&lt;-</span><span class=w> </span><span class=kt>int</span><span class=p>,</span><span class=w> </span><span class=nx>wg</span><span class=w> </span><span class=o>*</span><span class=nx>sync</span><span class=p>.</span><span class=nx>WaitGroup</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>defer</span><span class=w> </span><span class=nx>wg</span><span class=p>.</span><span class=nf>Done</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>for</span><span class=w> </span><span class=nx>job</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>jobs</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;Worker %d processing job %d\n&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>id</span><span class=p>,</span><span class=w> </span><span class=nx>job</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>results</span><span class=w> </span><span class=o>&lt;-</span><span class=w> </span><span class=nx>job</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=mi>2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>main</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>const</span><span class=w> </span><span class=nx>numWorkers</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=mi>3</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>const</span><span class=w> </span><span class=nx>numJobs</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=mi>10</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>jobs</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nb>make</span><span class=p>(</span><span class=kd>chan</span><span class=w> </span><span class=kt>int</span><span class=p>,</span><span class=w> </span><span class=nx>numJobs</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>results</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nb>make</span><span class=p>(</span><span class=kd>chan</span><span class=w> </span><span class=kt>int</span><span class=p>,</span><span class=w> </span><span class=nx>numJobs</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>var</span><span class=w> </span><span class=nx>wg</span><span class=w> </span><span class=nx>sync</span><span class=p>.</span><span class=nx>WaitGroup</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// Start workers</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>for</span><span class=w> </span><span class=nx>i</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=mi>1</span><span class=p>;</span><span class=w> </span><span class=nx>i</span><span class=w> </span><span class=o>&lt;=</span><span class=w> </span><span class=nx>numWorkers</span><span class=p>;</span><span class=w> </span><span class=nx>i</span><span class=o>++</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>wg</span><span class=p>.</span><span class=nf>Add</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>go</span><span class=w> </span><span class=nf>worker</span><span class=p>(</span><span class=nx>i</span><span class=p>,</span><span class=w> </span><span class=nx>jobs</span><span class=p>,</span><span class=w> </span><span class=nx>results</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=nx>wg</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// Send jobs</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>for</span><span class=w> </span><span class=nx>j</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=mi>1</span><span class=p>;</span><span class=w> </span><span class=nx>j</span><span class=w> </span><span class=o>&lt;=</span><span class=w> </span><span class=nx>numJobs</span><span class=p>;</span><span class=w> </span><span class=nx>j</span><span class=o>++</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>jobs</span><span class=w> </span><span class=o>&lt;-</span><span class=w> </span><span class=nx>j</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nb>close</span><span class=p>(</span><span class=nx>jobs</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// Wait and close results</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>go</span><span class=w> </span><span class=kd>func</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>wg</span><span class=p>.</span><span class=nf>Wait</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nb>close</span><span class=p>(</span><span class=nx>results</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// Collect results</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>for</span><span class=w> </span><span class=nx>result</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>results</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;Result:&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>result</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>Let&rsquo;s break down the key pieces:</p><ol><li><strong><code>jobs</code> channel</strong> — the queue. Workers read from it, the producer writes to it.</li><li><strong><code>results</code> channel</strong> — where workers send their output.</li><li><strong><code>sync.WaitGroup</code></strong> — tracks when all workers are done.</li><li><strong><code>close(jobs)</code></strong> — signals workers there&rsquo;s no more work. The <code>range</code> loop exits.</li></ol><p>This is the foundation. Everything else builds on top of it.</p><h2 id=adding-error-handling id=adding-error-handling><span class=me-2>Adding Error Handling</span>
+<a href=#adding-error-handling class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2><p>Real-world tasks fail. You need a way to propagate errors back without losing them:</p><div class=code-block><div class=code-header><span data-label-text=Go><i class="fas fa-code fa-fw small"></i></span> <button aria-label=copy data-title-succeed=Copied!><i class="far fa-clipboard"></i></button></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>Result</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>Value</span><span class=w> </span><span class=kt>int</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>Err</span><span class=w>   </span><span class=kt>error</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>worker</span><span class=p>(</span><span class=nx>id</span><span class=w> </span><span class=kt>int</span><span class=p>,</span><span class=w> </span><span class=nx>jobs</span><span class=w> </span><span class=o>&lt;-</span><span class=kd>chan</span><span class=w> </span><span class=kt>int</span><span class=p>,</span><span class=w> </span><span class=nx>results</span><span class=w> </span><span class=kd>chan</span><span class=o>&lt;-</span><span class=w> </span><span class=nx>Result</span><span class=p>,</span><span class=w> </span><span class=nx>wg</span><span class=w> </span><span class=o>*</span><span class=nx>sync</span><span class=p>.</span><span class=nx>WaitGroup</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>defer</span><span class=w> </span><span class=nx>wg</span><span class=p>.</span><span class=nf>Done</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>for</span><span class=w> </span><span class=nx>job</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>jobs</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>val</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nf>process</span><span class=p>(</span><span class=nx>job</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>results</span><span class=w> </span><span class=o>&lt;-</span><span class=w> </span><span class=nx>Result</span><span class=p>{</span><span class=nx>Value</span><span class=p>:</span><span class=w> </span><span class=nx>val</span><span class=p>,</span><span class=w> </span><span class=nx>Err</span><span class=p>:</span><span class=w> </span><span class=nx>err</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>Now the consumer can check each result:</p><div class=code-block><div class=code-header><span data-label-text=Go><i class="fas fa-code fa-fw small"></i></span> <button aria-label=copy data-title-succeed=Copied!><i class="far fa-clipboard"></i></button></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=k>for</span><span class=w> </span><span class=nx>r</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>results</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>if</span><span class=w> </span><span class=nx>r</span><span class=p>.</span><span class=nx>Err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>log</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;job failed: %v&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>r</span><span class=p>.</span><span class=nx>Err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>continue</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;Success:&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>r</span><span class=p>.</span><span class=nx>Value</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><h2 id=graceful-shutdown-with-context id=graceful-shutdown-with-context><span class=me-2>Graceful Shutdown with Context</span>
+<a href=#graceful-shutdown-with-context class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2><p>In production, you need to stop workers cleanly — on SIGTERM, on timeout, or when a critical error occurs. <code>context.Context</code> is the standard way:</p><div class=code-block><div class=code-header><span data-label-text=Go><i class="fas fa-code fa-fw small"></i></span> <button aria-label=copy data-title-succeed=Copied!><i class="far fa-clipboard"></i></button></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>worker</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>id</span><span class=w> </span><span class=kt>int</span><span class=p>,</span><span class=w> </span><span class=nx>jobs</span><span class=w> </span><span class=o>&lt;-</span><span class=kd>chan</span><span class=w> </span><span class=nx>Job</span><span class=p>,</span><span class=w> </span><span class=nx>results</span><span class=w> </span><span class=kd>chan</span><span class=o>&lt;-</span><span class=w> </span><span class=nx>Result</span><span class=p>,</span><span class=w> </span><span class=nx>wg</span><span class=w> </span><span class=o>*</span><span class=nx>sync</span><span class=p>.</span><span class=nx>WaitGroup</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>defer</span><span class=w> </span><span class=nx>wg</span><span class=p>.</span><span class=nf>Done</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>for</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>select</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>case</span><span class=w> </span><span class=o>&lt;-</span><span class=nx>ctx</span><span class=p>.</span><span class=nf>Done</span><span class=p>():</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;Worker %d: shutting down\n&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>id</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=k>return</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>case</span><span class=w> </span><span class=nx>job</span><span class=p>,</span><span class=w> </span><span class=nx>ok</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=o>&lt;-</span><span class=nx>jobs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=k>if</span><span class=w> </span><span class=p>!</span><span class=nx>ok</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=k>return</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nx>results</span><span class=w> </span><span class=o>&lt;-</span><span class=w> </span><span class=nf>process</span><span class=p>(</span><span class=nx>job</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>The caller controls the lifecycle:</p><div class=code-block><div class=code-header><span data-label-text=Go><i class="fas fa-code fa-fw small"></i></span> <button aria-label=copy data-title-succeed=Copied!><i class="far fa-clipboard"></i></button></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>cancel</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nf>WithTimeout</span><span class=p>(</span><span class=nx>context</span><span class=p>.</span><span class=nf>Background</span><span class=p>(),</span><span class=w> </span><span class=mi>30</span><span class=o>*</span><span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=k>defer</span><span class=w> </span><span class=nf>cancel</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// On interrupt signal</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=k>go</span><span class=w> </span><span class=kd>func</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>sigCh</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nb>make</span><span class=p>(</span><span class=kd>chan</span><span class=w> </span><span class=nx>os</span><span class=p>.</span><span class=nx>Signal</span><span class=p>,</span><span class=w> </span><span class=mi>1</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>signal</span><span class=p>.</span><span class=nf>Notify</span><span class=p>(</span><span class=nx>sigCh</span><span class=p>,</span><span class=w> </span><span class=nx>syscall</span><span class=p>.</span><span class=nx>SIGINT</span><span class=p>,</span><span class=w> </span><span class=nx>syscall</span><span class=p>.</span><span class=nx>SIGTERM</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=o>&lt;-</span><span class=nx>sigCh</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nf>cancel</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}()</span></span></span></code></pre></td></tr></table></div></div></div><p>When <code>cancel()</code> is called, every worker&rsquo;s <code>ctx.Done()</code> fires and they exit gracefully. No leaked goroutines, no half-processed work.</p><h2 id=a-production-ready-pool id=a-production-ready-pool><span class=me-2>A Production-Ready Pool</span>
+<a href=#a-production-ready-pool class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2><p>Let&rsquo;s put it all together into a reusable structure:</p><div class=code-block><div class=code-header><span data-label-text=Go><i class="fas fa-code fa-fw small"></i></span> <button aria-label=copy data-title-succeed=Copied!><i class="far fa-clipboard"></i></button></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span><span class=lnt>69
+</span><span class=lnt>70
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>pool</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kn>import</span><span class=w> </span><span class=p>(</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;context&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;sync&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>Task</span><span class=p>[</span><span class=nx>T</span><span class=w> </span><span class=kt>any</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=w> </span><span class=kt>any</span><span class=p>]</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>Payload</span><span class=w> </span><span class=nx>T</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>Result</span><span class=p>[</span><span class=nx>R</span><span class=w> </span><span class=kt>any</span><span class=p>]</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>Value</span><span class=w> </span><span class=nx>R</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>Err</span><span class=w>   </span><span class=kt>error</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>Pool</span><span class=p>[</span><span class=nx>T</span><span class=w> </span><span class=kt>any</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=w> </span><span class=kt>any</span><span class=p>]</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>workers</span><span class=w> </span><span class=kt>int</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>handler</span><span class=w> </span><span class=kd>func</span><span class=p>(</span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>T</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=nx>R</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>jobs</span><span class=w>    </span><span class=kd>chan</span><span class=w> </span><span class=nx>Task</span><span class=p>[</span><span class=nx>T</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=p>]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>results</span><span class=w> </span><span class=kd>chan</span><span class=w> </span><span class=nx>Result</span><span class=p>[</span><span class=nx>R</span><span class=p>]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nx>New</span><span class=p>[</span><span class=nx>T</span><span class=w> </span><span class=kt>any</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=w> </span><span class=kt>any</span><span class=p>](</span><span class=nx>workers</span><span class=p>,</span><span class=w> </span><span class=nx>queueSize</span><span class=w> </span><span class=kt>int</span><span class=p>,</span><span class=w> </span><span class=nx>handler</span><span class=w> </span><span class=kd>func</span><span class=p>(</span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>T</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=nx>R</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>))</span><span class=w> </span><span class=o>*</span><span class=nx>Pool</span><span class=p>[</span><span class=nx>T</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=p>]</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>return</span><span class=w> </span><span class=o>&amp;</span><span class=nx>Pool</span><span class=p>[</span><span class=nx>T</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=p>]{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>workers</span><span class=p>:</span><span class=w> </span><span class=nx>workers</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>handler</span><span class=p>:</span><span class=w> </span><span class=nx>handler</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>jobs</span><span class=p>:</span><span class=w>    </span><span class=nb>make</span><span class=p>(</span><span class=kd>chan</span><span class=w> </span><span class=nx>Task</span><span class=p>[</span><span class=nx>T</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=p>],</span><span class=w> </span><span class=nx>queueSize</span><span class=p>),</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>results</span><span class=p>:</span><span class=w> </span><span class=nb>make</span><span class=p>(</span><span class=kd>chan</span><span class=w> </span><span class=nx>Result</span><span class=p>[</span><span class=nx>R</span><span class=p>],</span><span class=w> </span><span class=nx>queueSize</span><span class=p>),</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=p>(</span><span class=nx>p</span><span class=w> </span><span class=o>*</span><span class=nx>Pool</span><span class=p>[</span><span class=nx>T</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=p>])</span><span class=w> </span><span class=nf>Start</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=kd>var</span><span class=w> </span><span class=nx>wg</span><span class=w> </span><span class=nx>sync</span><span class=p>.</span><span class=nx>WaitGroup</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>for</span><span class=w> </span><span class=nx>i</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w> </span><span class=nx>i</span><span class=w> </span><span class=p>&lt;</span><span class=w> </span><span class=nx>p</span><span class=p>.</span><span class=nx>workers</span><span class=p>;</span><span class=w> </span><span class=nx>i</span><span class=o>++</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>wg</span><span class=p>.</span><span class=nf>Add</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>go</span><span class=w> </span><span class=kd>func</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=k>defer</span><span class=w> </span><span class=nx>wg</span><span class=p>.</span><span class=nf>Done</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=k>for</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=k>select</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=k>case</span><span class=w> </span><span class=o>&lt;-</span><span class=nx>ctx</span><span class=p>.</span><span class=nf>Done</span><span class=p>():</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                    </span><span class=k>return</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=k>case</span><span class=w> </span><span class=nx>task</span><span class=p>,</span><span class=w> </span><span class=nx>ok</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=o>&lt;-</span><span class=nx>p</span><span class=p>.</span><span class=nx>jobs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                    </span><span class=k>if</span><span class=w> </span><span class=p>!</span><span class=nx>ok</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                        </span><span class=k>return</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                    </span><span class=nx>val</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>p</span><span class=p>.</span><span class=nf>handler</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>task</span><span class=p>.</span><span class=nx>Payload</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                    </span><span class=nx>p</span><span class=p>.</span><span class=nx>results</span><span class=w> </span><span class=o>&lt;-</span><span class=w> </span><span class=nx>Result</span><span class=p>[</span><span class=nx>R</span><span class=p>]{</span><span class=nx>Value</span><span class=p>:</span><span class=w> </span><span class=nx>val</span><span class=p>,</span><span class=w> </span><span class=nx>Err</span><span class=p>:</span><span class=w> </span><span class=nx>err</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>go</span><span class=w> </span><span class=kd>func</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>wg</span><span class=p>.</span><span class=nf>Wait</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nb>close</span><span class=p>(</span><span class=nx>p</span><span class=p>.</span><span class=nx>results</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=p>(</span><span class=nx>p</span><span class=w> </span><span class=o>*</span><span class=nx>Pool</span><span class=p>[</span><span class=nx>T</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=p>])</span><span class=w> </span><span class=nf>Submit</span><span class=p>(</span><span class=nx>task</span><span class=w> </span><span class=nx>Task</span><span class=p>[</span><span class=nx>T</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=p>])</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>p</span><span class=p>.</span><span class=nx>jobs</span><span class=w> </span><span class=o>&lt;-</span><span class=w> </span><span class=nx>task</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=p>(</span><span class=nx>p</span><span class=w> </span><span class=o>*</span><span class=nx>Pool</span><span class=p>[</span><span class=nx>T</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=p>])</span><span class=w> </span><span class=nf>Close</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nb>close</span><span class=p>(</span><span class=nx>p</span><span class=p>.</span><span class=nx>jobs</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=p>(</span><span class=nx>p</span><span class=w> </span><span class=o>*</span><span class=nx>Pool</span><span class=p>[</span><span class=nx>T</span><span class=p>,</span><span class=w> </span><span class=nx>R</span><span class=p>])</span><span class=w> </span><span class=nf>Results</span><span class=p>()</span><span class=w> </span><span class=o>&lt;-</span><span class=kd>chan</span><span class=w> </span><span class=nx>Result</span><span class=p>[</span><span class=nx>R</span><span class=p>]</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>return</span><span class=w> </span><span class=nx>p</span><span class=p>.</span><span class=nx>results</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>Usage is clean:</p><div class=code-block><div class=code-header><span data-label-text=Go><i class="fas fa-code fa-fw small"></i></span> <button aria-label=copy data-title-succeed=Copied!><i class="far fa-clipboard"></i></button></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>main</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>cancel</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nf>WithTimeout</span><span class=p>(</span><span class=nx>context</span><span class=p>.</span><span class=nf>Background</span><span class=p>(),</span><span class=w> </span><span class=mi>10</span><span class=o>*</span><span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>defer</span><span class=w> </span><span class=nf>cancel</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>p</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>pool</span><span class=p>.</span><span class=nx>New</span><span class=p>[</span><span class=kt>string</span><span class=p>,</span><span class=w> </span><span class=kt>int</span><span class=p>](</span><span class=mi>5</span><span class=p>,</span><span class=w> </span><span class=mi>100</span><span class=p>,</span><span class=w> </span><span class=kd>func</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>url</span><span class=w> </span><span class=kt>string</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>resp</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>http</span><span class=p>.</span><span class=nf>Get</span><span class=p>(</span><span class=nx>url</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>defer</span><span class=w> </span><span class=nx>resp</span><span class=p>.</span><span class=nx>Body</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>return</span><span class=w> </span><span class=nx>resp</span><span class=p>.</span><span class=nx>StatusCode</span><span class=p>,</span><span class=w> </span><span class=kc>nil</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>})</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>p</span><span class=p>.</span><span class=nf>Start</span><span class=p>(</span><span class=nx>ctx</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>urls</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=p>[]</span><span class=kt>string</span><span class=p>{</span><span class=s>&#34;https://go.dev&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;https://github.com&#34;</span><span class=p>,</span><span class=w> </span><span class=s>&#34;https://google.com&#34;</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>for</span><span class=w> </span><span class=nx>_</span><span class=p>,</span><span class=w> </span><span class=nx>u</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>urls</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>p</span><span class=p>.</span><span class=nf>Submit</span><span class=p>(</span><span class=nx>pool</span><span class=p>.</span><span class=nx>Task</span><span class=p>[</span><span class=kt>string</span><span class=p>,</span><span class=w> </span><span class=kt>int</span><span class=p>]{</span><span class=nx>Payload</span><span class=p>:</span><span class=w> </span><span class=nx>u</span><span class=p>})</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>p</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>for</span><span class=w> </span><span class=nx>r</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>p</span><span class=p>.</span><span class=nf>Results</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>r</span><span class=p>.</span><span class=nx>Err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nx>log</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;Error: %v&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>r</span><span class=p>.</span><span class=nx>Err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=k>continue</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;Status: %d\n&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>r</span><span class=p>.</span><span class=nx>Value</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><h2 id=when-to-use-worker-pools id=when-to-use-worker-pools><span class=me-2>When to Use Worker Pools</span>
+<a href=#when-to-use-worker-pools class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2><div class=table-wrapper><table><thead><tr><th>Scenario</th><th>Pool Size Hint</th></tr></thead><tbody><tr><td>HTTP API calls with rate limits</td><td>Match the rate limit</td></tr><tr><td>Database batch operations</td><td>Match connection pool size</td></tr><tr><td>CPU-bound processing (image resize, hashing)</td><td><code>runtime.NumCPU()</code></td></tr><tr><td>File I/O operations</td><td>2x-4x CPU count</td></tr><tr><td>Mixed workloads</td><td>Profile and tune</td></tr></tbody></table></div><h2 id=key-takeaways id=key-takeaways><span class=me-2>Key Takeaways</span>
+<a href=#key-takeaways class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2><ul><li><strong>Don&rsquo;t spawn unbounded goroutines</strong> — use a pool to control concurrency.</li><li><strong>Always use <code>context.Context</code></strong> — it&rsquo;s the standard cancellation mechanism in Go.</li><li><strong>Buffered channels</strong> for the job queue prevent the producer from blocking.</li><li><strong><code>sync.WaitGroup</code> + <code>close()</code></strong> is the cleanest way to signal completion.</li><li><strong>Generics</strong> (Go 1.18+) make reusable pools practical without <code>interface{}</code> casting.</li></ul><p>Worker pools are one of those patterns that look simple but unlock serious power when building systems at scale. Start with the basic pattern, add error handling, wire in context for graceful shutdown, and you&rsquo;ve got a production-ready building block.</p><hr><p><em>Found this useful? Check out my other posts on Go concurrency patterns.</em></p></div><div class="post-tail-wrapper text-muted"><div class="post-meta mb-3"><i class="far fa-folder-open fa-fw me-1"></i>
+<a href=/categories/golang/>Golang</a>
+,
+<a href=/categories/golang/concurrency/>Concurrency</a></div><div class=post-tags><i class="fa fa-tags fa-fw me-1"></i>
+<a href=/tags/golang/ class="post-tag no-text-decoration">golang</a>
+<a href=/tags/worker-pools/ class="post-tag no-text-decoration">worker-pools</a>
+<a href=/tags/concurrency/ class="post-tag no-text-decoration">concurrency</a>
+<a href=/tags/channels/ class="post-tag no-text-decoration">channels</a>
+<a href=/tags/goroutines/ class="post-tag no-text-decoration">goroutines</a></div><div class="post-tail-bottom d-flex justify-content-between align-items-center mt-5 pb-2"><div class=license-wrapper>This post is licensed under <a href=https://creativecommons.org/licenses/by/4.0/>CC BY 4.0</a> by the author.</div></div></div></article></main><aside aria-label=Panel id=panel-wrapper class="col-xl-3 ps-2 text-muted"><div class=access><section id=access-lastmod><h2 class=panel-heading>Recently Updated</h2><ul class="content list-unstyled ps-0 pb-1 ms-1 mt-2"><li class="text-truncate lh-lg"><a href=/post/2026-02-14-golang-worker-pools/>Mastering Worker Pools in Go: A Practical Guide</a></li></ul></section><section><h2 class=panel-heading>Trending Tags</h2><div class="d-flex flex-wrap mt-3 mb-1 me-3"><a class="post-tag btn btn-outline-primary" href=/tags/channels/>channels</a>
+<a class="post-tag btn btn-outline-primary" href=/tags/concurrency/>concurrency</a>
+<a class="post-tag btn btn-outline-primary" href=/tags/golang/>golang</a>
+<a class="post-tag btn btn-outline-primary" href=/tags/goroutines/>goroutines</a>
+<a class="post-tag btn btn-outline-primary" href=/tags/worker-pools/>worker-pools</a></div></section></div><div class="toc-border-cover z-3"></div><section id=toc-wrapper class="invisible position-sticky ps-0 pe-4 pb-4"><h2 class="panel-heading ps-3 pb-2 mb-0">Contents</h2><nav id=toc></nav></section></aside></div><div class=row><div id=tail-wrapper class="col-12 col-lg-11 col-xl-9 px-md-4"><nav class="post-navigation d-flex justify-content-between" aria-label="Post Navigation"><div class="btn btn-outline-primary disabled" aria-label=Older><p>-</p></div><div class="btn btn-outline-primary disabled" aria-label=Newer><p>-</p></div></nav><footer aria-label="Site Info" class="d-flex flex-column justify-content-center text-muted
+flex-lg-row justify-content-lg-between align-items-lg-center pb-lg-3"><p>©
+<time>2026</time>
+<a href=https://github.com/j-alonso-guerra>J. Alonso Guerra</a>.
+<span data-bs-toggle=tooltip data-bs-placement=top title="Except where otherwise noted, the blog posts on this site are licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0) License by the author.">Some rights reserved.</span></p><p>Using the <a data-bs-toggle=tooltip data-bs-placement=top title=v1.0.2 href=https://github.com/geekifan/hugo-theme-chirpy target=_blank rel=noopener>Chirpy</a> theme for <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a>.</p></footer></div></div><div id=search-result-wrapper class="d-flex justify-content-center d-none"><div class="col-11 content"><div id=search-hints><section><h2 class=panel-heading>Trending Tags</h2><div class="d-flex flex-wrap mt-3 mb-1 me-3"><a class="post-tag btn btn-outline-primary" href=/tags/channels/>channels</a>
+<a class="post-tag btn btn-outline-primary" href=/tags/concurrency/>concurrency</a>
+<a class="post-tag btn btn-outline-primary" href=/tags/golang/>golang</a>
+<a class="post-tag btn btn-outline-primary" href=/tags/goroutines/>goroutines</a>
+<a class="post-tag btn btn-outline-primary" href=/tags/worker-pools/>worker-pools</a></div></section></div><div id=search-results class="d-flex flex-wrap justify-content-center text-muted mt-3"></div></div></div><script>const DEFAULT_CONFIG={search:{minChars:1,maxResults:5,fields:{title:!0,description:!0,section:!0,contents:!0},strictMode:!0}};class FastSearch{constructor({searchInput:e,resultsContainer:t,json:n,searchResultTemplate:s=null,noResultsText:o=null}){this.searchInput=e,this.resultsContainer=t,this.json=n,this.searchResultTemplate=s,this.noResultsText=o,this.init()}init(){this.loadSearchIndex(),this.searchInput.addEventListener("input",e=>{if(!this.searchIndex){this.resultsContainer.innerHTML='<li class="search-message">Loading search index...</li>';return}this.performSearch(this.searchInput.value)})}async loadSearchIndex(){try{const e=await fetch(this.json);if(!e.ok)throw new Error("Failed to load search index");const t=await e.json();this.searchIndex=t.map(e=>({...e,searchableTitle:e.title?.toLowerCase()||"",searchableDesc:e.desc?.toLowerCase()||"",searchableSection:e.section?.toLowerCase()||"",searchableContents:e.contents?.toLowerCase()||""}))}catch(e){console.error("Error loading search index:",e),this.resultsContainer.innerHTML='<li class="search-message">Error loading search index...</li>'}}escapeHtml(e){return e?e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"):""}containsTerm(e,t){return!!e&&!!t&&e.includes(t)}performSearch(e){if(e=e.toLowerCase().trim(),!e||!this.searchIndex||e.length<DEFAULT_CONFIG.search.minChars){this.resultsContainer.innerHTML="";return}const s=[e,...e.split(/\s+/).filter(e=>e.length>0)],t=[...new Set(s)],o=DEFAULT_CONFIG.search.strictMode,n=this.searchIndex.map(e=>{const s=this.checkFieldsForMatch(e,t[0]);if(o&&!s)return{item:e,score:0,matched:!1};let n=0,i=0,a=!1;t.forEach((t,s)=>{const r=s===0,o=this.checkFieldsForMatch(e,t);o&&(i++,o.inTitle&&(n+=r?10:5,a=!0),o.inDesc&&(n+=r?8:4),o.inSection&&(n+=r?6:3),o.inContents&&(n+=r?4:2))});const r=i/t.length,c=n*r*(a?1.5:1);return{item:e,score:c,matched:s}}).filter(e=>e.matched).sort((e,t)=>t.score-e.score).slice(0,DEFAULT_CONFIG.search.maxResults).map(e=>e.item);if(n.length===0){this.resultsContainer.innerHTML='<p class="mt-5">Oops! No results found.</p>';return}const i=n.map(e=>{let t="",n="";return e.categories&&(t=e.categories.join(", "),t=`<div class="me-sm-4"><i class="far fa-folder fa-fw"></i>${t}</div>`),e.tags&&(n=e.tags.join(", "),n=`<div><i class="fa fa-tag fa-fw"></i>${n}</div>`),`
+        <article class="px-1 px-sm-2 px-lg-4 px-xl-0">
+          <header>
+            <h2><a href="${this.escapeHtml(e.permalink)}">${this.escapeHtml(e.title)}</a></h2>
+            <div class="post-meta d-flex flex-column flex-sm-row text-muted mt-1 mb-1">
+              ${t}
+              ${n}
+            </div>
+          </header>
+          <p>${this.escapeHtml(e.contents)}</p>
+        </article>
+      `}).join("");this.resultsContainer.innerHTML=i}checkFieldsForMatch(e,t){const n={inTitle:!1,inDesc:!1,inSection:!1,inContents:!1};return DEFAULT_CONFIG.search.fields.title&&this.containsTerm(e.searchableTitle,t)&&(n.inTitle=!0),DEFAULT_CONFIG.search.fields.description&&this.containsTerm(e.searchableDesc,t)&&(n.inDesc=!0),DEFAULT_CONFIG.search.fields.section&&this.containsTerm(e.searchableSection,t)&&(n.inSection=!0),DEFAULT_CONFIG.search.fields.contents&&this.containsTerm(e.searchableContents,t)&&(n.inContents=!0),!!(n.inTitle||n.inDesc||n.inSection||n.inContents)&&n}}const search=new FastSearch({searchInput:document.getElementById("search-input"),resultsContainer:document.getElementById("search-results"),json:`/index.json`})</script></div><aside aria-label="Scroll to Top"><button id=back-to-top type=button class="btn btn-lg btn-box-shadow">
+<i class="fas fa-angle-up"></i></button></aside></div><div id=mask class="d-none position-fixed w-100 h-100 z-1"></div></body></html>
