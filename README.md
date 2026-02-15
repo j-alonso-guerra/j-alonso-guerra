@@ -1,40 +1,42 @@
-# Hugo Theme Chirpy Starter Template
+# Hey, I'm J. Alonso Guerra 👋
 
-This is a quick start template for [Hugo Theme Chirpy](https://github.com/geekifan/hugo-theme-chirpy). It uses [Hugo modules](https://gohugo.io/hugo-modules/) feature to load the theme.
+Backend engineer focused on building **event-driven, decoupled architectures** with Go.
 
-It comes with a basic theme structure and configuration. GitHub action has been set up to deploy the theme to a public GitHub page automatically. Also, there's a cron job to update the theme automatically everyday.
+I design and build distributed systems using messaging patterns with **Kafka, NATS, and AWS SQS**. I care about clean architecture, domain-driven design, and systems that scale without becoming a mess.
 
-## Get started
+**Short-term goal:** Software Architect — owning technical decisions end to end.
 
-1. Click *Use this template*, and create your repository as `<username>.github.io` on GitHub.
-![Step 1](https://user-images.githubusercontent.com/5889006/156916624-20b2a784-f3a9-4718-aa5f-ce2a436b241f.png)
-
-2. Once the repository is created, create a GitHub codespace associated with it.
-![Create codespace](https://user-images.githubusercontent.com/5889006/156916672-43b7b6e9-4ffb-4704-b4ba-d5ca40ffcae7.png)
-
-3. And voila! You're ready to go. The codespace has been configured with the latest version of Hugo extended, just run `hugo server` in the terminal and see your new site in action.
-
-4. Check `config` folder for the configuration files. You can edit them to suit your needs. Make sure to update the `baseURL` property in `hugo.toml` to your site's URL.
-
-5. Open Settings -> Pages. Change the build branch from `main` to `gh-pages`.
-![Build](https://github.com/namanh11611/hugo-theme-stack-starter/assets/16586200/12c763cd-bead-4923-b610-8788f388fcb5)
-
-6. Once you're done editing the site, just commit it and push it. GitHub action will deploy the site automatically to GitHub page asociated with the repository.
-![GitHub action](https://user-images.githubusercontent.com/5889006/156916881-90b8bb9b-1925-4e60-9d7a-8026cda729bf.png)
+**Long-term goal:** Tech Lead — building great teams, not just great systems.
 
 ---
 
-In case you don't want to use GitHub codespace, you can also run this template in your local machine. **You need to install Git, Go and Hugo extended locally.**
+### Tech Stack
 
-## Update theme manually
+<p>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=go" alt="Go" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=docker" alt="Docker" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=kubernetes" alt="Kubernetes" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=aws" alt="AWS" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=gcp" alt="GCP" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=kafka" alt="Kafka" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=nats" alt="NATS" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=redis" alt="Redis" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=postgres" alt="PostgreSQL" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=mongodb" alt="MongoDB" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=git" alt="Git" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=github" alt="GitHub" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=gitlab" alt="GitLab" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=linux" alt="Linux" height="40"/>
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=grafana" alt="Grafana" height="40"/>
+</p>
 
-Run:
+---
 
-```bash
-hugo mod get -u github.com/geekifan/hugo-theme-chirpy
-hugo mod tidy
-```
-
-## Credits
-
-This README is modified from [hugo-theme-stack-starter](https://github.com/CaiJimmy/hugo-theme-stack-starter).
+<p>
+  <a href="https://www.linkedin.com/in/j-alonso-guerra/">
+    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white" alt="LinkedIn"/>
+  </a>
+  <a href="mailto:juniorguerrac17@gmail.com">
+    <img src="https://img.shields.io/badge/Email-D14836?style=flat&logo=gmail&logoColor=white" alt="Email"/>
+  </a>
+</p>

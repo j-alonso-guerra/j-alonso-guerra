@@ -1,8 +1,8 @@
 ---
-title: "分类"
+title: "Categorías"
 menu:
   main:
-    name: 分类
+    name: Categorías
     weight: 2
     pre: fa-stream
 ---

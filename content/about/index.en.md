@@ -10,17 +10,22 @@ menu:
     pre: fa-info-circle
 ---
 
-[Chirpy](https://github.com/cotes2020/jekyll-theme-chirpy) is a blog theme originally based on [Jekyll](https://jekyllrb.com/). Due to Jekyll's design limitations, it does not natively support internationalization (i18n) and requires third-party plugins for i18n functionality. To enable i18n support for Chirpy without the hassle of relying on third-party plugins, the [hugo-theme-chirpy](https://github.com/geekifan/hugo-theme-chirpy) project migrated the Chirpy theme to [Hugo](https://gohugo.io/) with minimal adaptations. All features of Chirpy are available in hugo-theme-chirpy (though some functionalities may operate differently within the Hugo framework).
+Hey! I'm **J. Alonso Guerra**, a backend engineer from Colombia who's been building distributed systems and cloud-native applications with **Go** for the past few years.
 
-Follow the posts in the demo site to quickly set up a free personal blog!
-## Features
+I'm passionate about designing systems that handle real scale — from messaging platforms processing millions of daily interactions to billing engines with real-time event processing. I enjoy the challenge of making things fast, reliable, and elegant under the hood.
 
-- **Dark Mode**: Enhanced readability in low-light environments.
-- **Multilingual UI:** Easily switch between different languages.
-- **Efficient Post Organization:** Use hierarchical categories, trending tags, recommended reading, and search functionalities.
-- **Optimized Layout:** Includes TOC, syntax highlighting, prompts, and more.
-- **Rich Writing Extensions:** Support for mathematical formulas, charts, flowcharts, and embedded media.
-- **Multiple Comment Systems:** Choose from various commenting options.
-- **Web Analysis Tools:** Integrated with multiple analytics tools.
-- **Modern Web Technologies:** Built for SEO and web performance.
-- **RSS Feed Support:** Keep your readers updated with RSS feeds.
+### What I do
+
+I currently work as a **Senior Backend Engineer** at [Ipcom](https://ipcom.ai/), where I design event-driven architectures on GCP, build real-time reporting systems, and lead the backend development of AI-powered voicebot platforms. Before that, I worked on microservices modernization for [Falabella](https://amaris.com/) (one of Latin America's largest retailers) and built digital security platforms at [Virtual Padlock](https://virtualpadlocks.com/).
+
+My daily toolkit revolves around **Go, Kubernetes, Redis, NATS**, and cloud platforms like **GCP** and **AWS**. I'm a firm believer in clean architecture, domain-driven design, and keeping things simple until complexity is truly needed.
+
+### Beyond code
+
+When I'm not writing Go, you'll find me exploring cloud certifications, tinkering with AI agents, or reading about system design patterns. I'm also a native Spanish speaker with professional English — I've worked remotely with teams across Colombia, Chile, Peru, and beyond.
+
+### Let's connect
+
+- [LinkedIn](https://www.linkedin.com/in/j-alonso-guerra/?locale=en_US)
+- [GitHub](https://github.com/j-alonso-guerra)
+- [juniorguerrac17@gmail.com](mailto:juniorguerrac17@gmail.com)

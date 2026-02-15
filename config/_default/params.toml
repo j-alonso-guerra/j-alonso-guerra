@@ -1,69 +1,34 @@
-# boolean type, the global switch for TOC in posts.
 toc = true
-# the avatar on sidebar, should be a relative path to /assets.
 avatar = "img/commons/avatar.jpg"
-author = "yifan"
+author = "jalonso"
 
 [assets]
-  # Self-hosted static assets, default to false. If true, the assets will be hosted on your own server.
   self_host = false
 
 [social]
-  name = "Yifan"
-  url = "https://github.com/geekifan"
+  name = "J. Alonso Guerra"
+  url = "https://github.com/j-alonso-guerra"
 
 [[social.links]]
   type = "github"
-  id = "yourusername"
+  id = "j-alonso-guerra"
   icon = "fab fa-github"
 
 [[social.links]]
-  type = "twitter"
-  id = "yourhandle"
-  icon = "fab fa-twitter"
+  type = "linkedin"
+  id = "j-alonso-guerra"
+  icon = "fab fa-linkedin"
 
 [[social.links]]
   type = "email"
-  id = "your.email@example.com"
+  id = "juniorguerrac17@gmail.com"
   icon = "fas fa-envelope"
 
 [[social.links]]
   type = "rss"
   icon = "fas fa-rss"
-  noblank = true  # will not open in new window
+  noblank = true
 
 [comments]
-# Global switch for the post-comment system. [true | false]
-enable = false
-# The provider options are as follows: [disqus | utterances | giscus]
-provider = ""
-
-# Disqus options
-[comments.disqus]
-# fill with the Disqus shortname. › https://help.disqus.com/en/articles/1717111-what-s-a-shortname
-shortname = ""
-
-# utterances settings › https://utteranc.es/
-[comments.utterances]
-# <gh-username>/<repo>
-repo = ""
-# < url | pathname | title | ...>
-issue_term = ""
-
-# Giscus options › https://giscus.app
-[comments.giscus]
-# <gh-username>/<repo>
-repo = ""
-repo_id = ""
-category = ""
-category_id = ""
-# optional, default to 'pathname'
-mapping = ""
-# optional, default to '0'
-strict = ""
-# optional, default to 'bottom'
-input_position = ""
-# optional, default to site language
-lang = ""
-# optional, default to the value of `1`
-reactions_enabled = ""
+  enable = false
+  provider = ""
